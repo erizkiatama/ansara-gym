@@ -26,3 +26,9 @@ Refer to `ROADMAP.md` to identify the active week and learning objectives.
 2. IDIOMATIC GO IMPLEMENTATION: Write clean, idiomatic, type-safe Go code using standard package organization (`/cmd`, `/pkg` or `/internal`).
 3. SENIOR AUDIT: Point out Go-specific pitfalls (e.g., unbuffered channel deadlocks, unhandled error returns, Goroutine leaks, missing `defer resp.Body.Close()`, N+1 query risks).
 4. VERIFICATION: Provide exact execution commands (e.g., `go test -race ./...`, `EXPLAIN ANALYZE`, `pprof`, load testing) to prove the system scales.
+
+---
+## Misc. Rules:
+
+- When creating a commit, never add `co-authored by cursor` to the commit message or anywhere.
+- When creating a PR, never add `Made by Cursor` anywhere in the PR description body.
