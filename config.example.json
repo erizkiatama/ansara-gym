@@ -1,0 +1,20 @@
+{
+  "app": {
+    "port": 8080
+  },
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "user": "erizkiatama",
+    "password": "",
+    "name": "ansara_gym",
+    "sslmode": "disable",
+    "max_open_conns": 25,
+    "max_idle_conns": 25,
+    "conn_max_lifetime": "5m",
+    "conn_max_idle_time": "1m"
+  },
+  "log": {
+    "level": "info"
+  }
+}
