@@ -6,7 +6,7 @@
 
 This roadmap maps the MVP feature set to a 12-week Go Senior Backend learning path, per `.cursorrules`.
 
-**Active week: 2** (Week 1 complete). Progress and decisions for finished weeks live in [`docs/progress/`](docs/progress/) (`Week 1.md`, …).
+**Active week: 3** (Weeks 1–2 complete). Progress and decisions for finished weeks live in [`docs/progress/`](docs/progress/) (`Week 1.md`, `Week 2.md`, …).
 
 ## Architecture Decisions (locked in during Phase 1)
 
@@ -41,6 +41,7 @@ This roadmap maps the MVP feature set to a 12-week Go Senior Backend learning pa
 - **Topic**: Migration tooling (`golang-migrate` or `goose`), index planning (`trainer_id`, `client_id`, `session_date`, FK columns), primary/foreign key constraints.
 - **Feature**: Full initial schema migrated (all 6 core tables), seeded exercise catalog (~20-30 common exercises).
 - **Verify**: Run migrations up/down cleanly, `\d+ <table>` in `psql` to confirm indexes/constraints.
+- **Progress**: [`docs/progress/Week 2.md`](docs/progress/Week%202.md)
 
 ### Week 3 — Authentication
 
