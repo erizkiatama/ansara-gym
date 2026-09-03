@@ -25,6 +25,9 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("config: %w", err)
 	}
+	if err := cfg.Auth.Validate(); err != nil {
+		return fmt.Errorf("config: %w", err)
+	}
 
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.Log.Level}))
 	slog.SetDefault(log)
@@ -45,7 +48,7 @@ func run() error {
 	addr := fmt.Sprintf(":%d", cfg.App.Port)
 	httpServer := &http.Server{
 		Addr:              addr,
-		Handler:           server.New(log, database),
+		Handler:           server.New(log, database, cfg.Auth),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

@@ -6,7 +6,7 @@
 
 This roadmap maps the MVP feature set to a 12-week Go Senior Backend learning path, per `.cursorrules`.
 
-**Active week: 3** (Weeks 1–2 complete). Progress and decisions for finished weeks live in [`docs/progress/`](docs/progress/) (`Week 1.md`, `Week 2.md`, …).
+**Active week: 4** (Weeks 1–3 complete). Progress and decisions for finished weeks live in [`docs/progress/`](docs/progress/) (`Week 1.md`, `Week 2.md`, `Week 3.md`, …).
 
 ## Architecture Decisions (locked in during Phase 1)
 
@@ -46,25 +46,26 @@ This roadmap maps the MVP feature set to a 12-week Go Senior Backend learning pa
 ### Week 3 — Authentication
 
 - **Topic**: Password hashing (bcrypt or argon2), JWT issuing/verification, middleware for protected routes, propagating trainer identity via `context.Context`.
-- **Feature**: `POST /auth/signup`, `POST /auth/login`, auth middleware protecting all trainer routes.
+- **Feature**: `POST /v1/auth/signup`, `POST /v1/auth/login`, auth middleware protecting all trainer routes.
 - **Verify**: Manual token issuance/verification tests, confirm unauthenticated requests are rejected with 401.
+- **Progress**: [`docs/progress/Week 3.md`](docs/progress/Week%203.md)
 
 ### Week 4 — Core CRUD (Clients)
 
 - **Topic**: Input validation, consistent error-handling conventions, avoiding N+1 queries, repository pattern for `trainer_id` scoping.
-- **Feature**: Full client CRUD (`POST/GET/PUT/DELETE /clients`), always scoped to the authenticated trainer.
+- **Feature**: Full client CRUD (`POST/GET/PUT/DELETE /v1/clients`), always scoped to the authenticated trainer.
 - **Verify**: Confirm a trainer cannot access/mutate another trainer's clients (manual cross-tenant test).
 
 ### Week 5 — Workout Logging
 
 - **Topic**: Database transactions (`sqlx.Tx`), nested multi-row writes, partial-failure rollback handling.
-- **Feature**: `POST /clients/{id}/sessions` — create a session with nested exercises and sets in one atomic transaction.
+- **Feature**: `POST /v1/clients/{id}/sessions` — create a session with nested exercises and sets in one atomic transaction.
 - **Verify**: Force a mid-transaction failure (e.g. invalid exercise_id in one of many sets) and confirm full rollback — no partial rows persisted.
 
 ### Week 6 — Querying & Analytics
 
 - **Topic**: `EXPLAIN ANALYZE`, composite indexes, pagination (keyset vs offset), aggregate queries.
-- **Feature**: `GET /clients/{id}/sessions` (paginated history), `GET /clients/{id}/exercises/{exerciseId}/progress` (max weight over time, excluding warm-up sets).
+- **Feature**: `GET /v1/clients/{id}/sessions` (paginated history), `GET /v1/clients/{id}/exercises/{exerciseId}/progress` (max weight over time, excluding warm-up sets).
 - **Verify**: `EXPLAIN ANALYZE` on the progress query before/after adding the relevant composite index; confirm plan uses an index scan, not a sequential scan, at realistic data volume.
 
 ### Week 7 — Concurrency

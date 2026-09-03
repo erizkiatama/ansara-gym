@@ -18,12 +18,18 @@ import (
 // Env names follow nested keys: app.port → APP_PORT, database.host → DATABASE_HOST.
 type Config struct {
 	App      AppConfig      `mapstructure:"app"`
+	Auth     AuthConfig     `mapstructure:"auth"`
 	Database DatabaseConfig `mapstructure:"database"`
 	Log      LogConfig      `mapstructure:"log"`
 }
 
 type AppConfig struct {
 	Port int `mapstructure:"port"`
+}
+
+type AuthConfig struct {
+	JWTSecret string        `mapstructure:"jwt_secret"`
+	JWTTTL    time.Duration `mapstructure:"jwt_ttl"`
 }
 
 type LogConfig struct {
@@ -70,6 +76,9 @@ func Load() (Config, error) {
 	if !v.IsSet("database.max_idle_conns") {
 		cfg.Database.MaxIdleConns = cfg.Database.MaxOpenConns
 	}
+	if !v.IsSet("auth.jwt_ttl") {
+		cfg.Auth.JWTTTL = 24 * time.Hour
+	}
 
 	cfg.normalize()
 	if err := cfg.validate(); err != nil {
@@ -79,6 +88,7 @@ func Load() (Config, error) {
 }
 
 func (c *Config) normalize() {
+	c.Auth.JWTSecret = strings.TrimSpace(c.Auth.JWTSecret)
 	c.Database.Host = strings.TrimSpace(c.Database.Host)
 	c.Database.User = strings.TrimSpace(c.Database.User)
 	c.Database.Password = strings.TrimSpace(c.Database.Password)
@@ -116,6 +126,19 @@ func (c Config) validate() error {
 	}
 	if c.Database.ConnMaxIdleTime <= 0 {
 		return fmt.Errorf("DATABASE_CONN_MAX_IDLE_TIME must be > 0, got %s", c.Database.ConnMaxIdleTime)
+	}
+	return nil
+}
+
+const minJWTSecretBytes = 32
+
+// Validate checks JWT settings. cmd/server must call this; cmd/migrate must not.
+func (a AuthConfig) Validate() error {
+	if n := len(a.JWTSecret); n < minJWTSecretBytes {
+		return fmt.Errorf("AUTH_JWT_SECRET must be at least %d bytes, got %d", minJWTSecretBytes, n)
+	}
+	if a.JWTTTL <= 0 {
+		return fmt.Errorf("AUTH_JWT_TTL must be > 0, got %s", a.JWTTTL)
 	}
 	return nil
 }

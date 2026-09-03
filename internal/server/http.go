@@ -2,31 +2,35 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/erizkiatama/ansara-gym/internal/auth"
+	"github.com/erizkiatama/ansara-gym/internal/config"
+	authhttp "github.com/erizkiatama/ansara-gym/internal/server/auth"
+	"github.com/erizkiatama/ansara-gym/internal/server/respond"
+	"github.com/erizkiatama/ansara-gym/internal/trainer"
 	"github.com/jmoiron/sqlx"
 )
 
 type Server struct {
-	log *slog.Logger
-	db  *sqlx.DB
+	log  *slog.Logger
+	db   *sqlx.DB
+	auth *authhttp.Handler
 }
 
-func New(log *slog.Logger, database *sqlx.DB) http.Handler {
-	s := &Server{log: log, db: database}
-
-	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.Recoverer)
-
-	r.Get("/healthz", s.healthz)
-
-	return r
+func New(log *slog.Logger, database *sqlx.DB, authCfg config.AuthConfig) http.Handler {
+	s := &Server{
+		log: log,
+		db:  database,
+		auth: authhttp.NewHandler(
+			log,
+			auth.NewTokens(authCfg.JWTSecret, authCfg.JWTTTL),
+			trainer.NewRepo(database),
+		),
+	}
+	return s.routes()
 }
 
 type healthResponse struct {
@@ -39,17 +43,9 @@ func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
 
 	if err := s.db.PingContext(ctx); err != nil {
 		s.log.Error("health check db ping failed", "err", err)
-		writeJSON(w, http.StatusServiceUnavailable, healthResponse{Status: "unavailable"})
+		respond.JSON(w, http.StatusServiceUnavailable, healthResponse{Status: "unavailable"})
 		return
 	}
 
-	writeJSON(w, http.StatusOK, healthResponse{Status: "ok"})
-}
-
-func writeJSON(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		slog.Error("write json response", "err", err)
-	}
+	respond.JSON(w, http.StatusOK, healthResponse{Status: "ok"})
 }
