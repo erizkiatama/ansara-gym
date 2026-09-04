@@ -34,6 +34,9 @@ func (s *Server) routes() http.Handler {
 			r.Put("/clients/{id}", s.clients.Update)
 			r.Delete("/clients/{id}", s.clients.Delete)
 			r.Post("/clients/{id}/sessions", s.sessions.Create)
+			r.Get("/clients/{id}/sessions", s.sessions.List)
+			r.Get("/clients/{id}/sessions/{sessionId}", s.sessions.Get)
+			r.Get("/clients/{id}/exercises/{exerciseId}/progress", s.sessions.Progress)
 		})
 	})
 

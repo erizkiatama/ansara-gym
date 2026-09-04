@@ -54,6 +54,21 @@ type Set struct {
 	UpdatedAt         time.Time       `db:"updated_at"`
 }
 
+// ListParams is keyset paging for a client's session history (newest first).
+// Limit is the page size (handler already clamped). BeforeID empty means the first page.
+type ListParams struct {
+	Limit      int
+	BeforeDate time.Time
+	BeforeID   string
+}
+
+// ProgressPoint is max working-set weight for one session (warm-ups excluded).
+type ProgressPoint struct {
+	SessionID   string    `db:"session_id"`
+	SessionDate time.Time `db:"session_date"`
+	MaxWeight   float64   `db:"max_weight"`
+}
+
 type Repo struct {
 	db *sqlx.DB
 }
