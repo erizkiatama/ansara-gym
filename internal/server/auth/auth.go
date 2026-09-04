@@ -8,38 +8,31 @@ import (
 
 	authkit "github.com/erizkiatama/ansara-gym/internal/auth"
 	"github.com/erizkiatama/ansara-gym/internal/server/respond"
-	"github.com/erizkiatama/ansara-gym/internal/trainer"
+	store "github.com/erizkiatama/ansara-gym/internal/trainer"
 )
 
 type Handler struct {
 	log      *slog.Logger
 	tokens   *authkit.Tokens
-	trainers TrainerStore
+	trainers Repository
 }
 
-func NewHandler(log *slog.Logger, tokens *authkit.Tokens, trainers TrainerStore) *Handler {
+func NewHandler(log *slog.Logger, tokens *authkit.Tokens, trainers Repository) *Handler {
 	return &Handler{log: log, tokens: tokens, trainers: trainers}
 }
 
 func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 	var req signupRequest
-	if err := respond.Decode(w, r, &req); err != nil {
-		respond.Error(w, http.StatusBadRequest, "invalid json")
+	if !respond.Bind(w, r, &req) {
 		return
 	}
 
-	email, err := normalizeEmail(req.Email)
-	if err != nil {
-		respond.Error(w, http.StatusBadRequest, "invalid email")
-		return
+	trainer := store.Trainer{
+		Email: strings.ToLower(strings.TrimSpace(req.Email)),
+		Name:  strings.TrimSpace(req.Name),
 	}
-	name, err := normalizeName(req.Name)
-	if err != nil {
-		respond.Error(w, http.StatusBadRequest, "invalid name")
-		return
-	}
-	if err := validatePassword(req.Password); err != nil {
-		respond.Error(w, http.StatusBadRequest, "password must be 8 to 128 characters")
+	if err := validateSignup(trainer, req.Password); err != nil {
+		respond.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -49,10 +42,11 @@ func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 		respond.Error(w, http.StatusInternalServerError, "internal error")
 		return
 	}
+	trainer.PasswordHash = hash
 
-	row, err := h.trainers.Insert(r.Context(), email, hash, name)
+	row, err := h.trainers.Insert(r.Context(), trainer)
 	if err != nil {
-		if errors.Is(err, trainer.ErrEmailTaken) {
+		if errors.Is(err, store.ErrEmailTaken) {
 			respond.Error(w, http.StatusConflict, "email already registered")
 			return
 		}
@@ -70,30 +64,25 @@ func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 
 	respond.JSON(w, http.StatusCreated, tokenResponse{
 		Token:   token,
-		Trainer: trainerResponse{ID: row.ID, Email: row.Email, Name: row.Name},
+		Trainer: toResponse(row),
 	})
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
-	if err := respond.Decode(w, r, &req); err != nil {
-		respond.Error(w, http.StatusBadRequest, "invalid json")
+	if !respond.Bind(w, r, &req) {
 		return
 	}
 
-	email, err := normalizeEmail(req.Email)
-	if err != nil {
-		respond.Error(w, http.StatusUnauthorized, "invalid credentials")
-		return
-	}
-	if req.Password == "" {
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	if email == "" || req.Password == "" {
 		respond.Error(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
 
 	row, err := h.trainers.GetByEmail(r.Context(), email)
 	if err != nil {
-		if errors.Is(err, trainer.ErrNotFound) {
+		if errors.Is(err, store.ErrNotFound) {
 			authkit.DummyCompare(req.Password)
 			respond.Error(w, http.StatusUnauthorized, "invalid credentials")
 			return
@@ -117,7 +106,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	respond.JSON(w, http.StatusOK, tokenResponse{
 		Token:   token,
-		Trainer: trainerResponse{ID: row.ID, Email: row.Email, Name: row.Name},
+		Trainer: toResponse(row),
 	})
 }
 
@@ -130,7 +119,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 
 	row, err := h.trainers.GetByID(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, trainer.ErrNotFound) {
+		if errors.Is(err, store.ErrNotFound) {
 			respond.Error(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
@@ -139,7 +128,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond.JSON(w, http.StatusOK, trainerResponse{ID: row.ID, Email: row.Email, Name: row.Name})
+	respond.JSON(w, http.StatusOK, toResponse(row))
 }
 
 func (h *Handler) RequireTrainer(next http.Handler) http.Handler {

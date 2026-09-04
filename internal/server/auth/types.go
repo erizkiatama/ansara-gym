@@ -3,17 +3,15 @@ package auth
 import (
 	"context"
 
-	"github.com/erizkiatama/ansara-gym/internal/trainer"
+	store "github.com/erizkiatama/ansara-gym/internal/trainer"
 )
 
-// TrainerStore is the slice of trainer persistence this HTTP package needs.
-type TrainerStore interface {
-	Insert(ctx context.Context, email, passwordHash, name string) (trainer.Trainer, error)
-	GetByEmail(ctx context.Context, email string) (trainer.Trainer, error)
-	GetByID(ctx context.Context, id string) (trainer.Trainer, error)
+// Repository is the slice of trainer persistence this HTTP package needs.
+type Repository interface {
+	Insert(ctx context.Context, trainer store.Trainer) (store.Trainer, error)
+	GetByEmail(ctx context.Context, email string) (store.Trainer, error)
+	GetByID(ctx context.Context, id string) (store.Trainer, error)
 }
-
-var _ TrainerStore = (*trainer.Repo)(nil)
 
 type signupRequest struct {
 	Email    string `json:"email"`
@@ -35,4 +33,8 @@ type trainerResponse struct {
 type tokenResponse struct {
 	Token   string          `json:"token"`
 	Trainer trainerResponse `json:"trainer"`
+}
+
+func toResponse(row store.Trainer) trainerResponse {
+	return trainerResponse{ID: row.ID, Email: row.Email, Name: row.Name}
 }

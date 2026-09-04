@@ -6,7 +6,7 @@
 
 This roadmap maps the MVP feature set to a 12-week Go Senior Backend learning path, per `.cursorrules`.
 
-**Active week: 4** (Weeks 1–3 complete). Progress and decisions for finished weeks live in [`docs/progress/`](docs/progress/) (`Week 1.md`, `Week 2.md`, `Week 3.md`, …).
+**Active week: 5** (Weeks 1–4 complete). Progress and decisions for finished weeks live in [`docs/progress/`](docs/progress/) (`Week 1.md`, `Week 2.md`, `Week 3.md`, `Week 4.md`, …).
 
 ## Architecture Decisions (locked in during Phase 1)
 
@@ -23,7 +23,7 @@ This roadmap maps the MVP feature set to a 12-week Go Senior Backend learning pa
 | Entity | Purpose | Key Fields |
 |---|---|---|
 | `trainers` | Authenticated users who own clients | `id`, `email`, `password_hash`, `name` |
-| `clients` | People a trainer trains (no login) | `id`, `trainer_id` (FK), `name`, `is_self` (optional convenience flag) |
+| `clients` | People a trainer trains (no login) | `id`, `trainer_id` (FK), `name`, `notes` (nullable trainer memo) |
 | `exercises` | Global exercise catalog | `id`, `name`, `category` |
 | `workout_sessions` | One training session with a client | `id`, `client_id` (FK), `trainer_id` (captured at creation, protects history), `session_date`, `notes` |
 | `workout_session_exercises` | An exercise performed within a session | `id`, `session_id` (FK), `exercise_id` (FK), `order_index`, `notes` |
@@ -53,8 +53,9 @@ This roadmap maps the MVP feature set to a 12-week Go Senior Backend learning pa
 ### Week 4 — Core CRUD (Clients)
 
 - **Topic**: Input validation, consistent error-handling conventions, avoiding N+1 queries, repository pattern for `trainer_id` scoping.
-- **Feature**: Full client CRUD (`POST/GET/PUT/DELETE /v1/clients`), always scoped to the authenticated trainer.
+- **Feature**: Full client CRUD (`POST/GET/PUT/DELETE /v1/clients` and `GET /v1/clients/{id}`), always scoped to the authenticated trainer. Nullable `clients.notes` (injuries/constraints memo).
 - **Verify**: Confirm a trainer cannot access/mutate another trainer's clients (manual cross-tenant test).
+- **Progress**: [`docs/progress/Week 4.md`](docs/progress/Week%204.md)
 
 ### Week 5 — Workout Logging
 

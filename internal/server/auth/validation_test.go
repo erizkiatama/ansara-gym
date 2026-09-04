@@ -1,28 +1,38 @@
 package auth
 
-import "testing"
+import (
+	"testing"
 
-func TestNormalizeEmail(t *testing.T) {
-	got, err := normalizeEmail("  Foo.Bar@Example.COM ")
-	if err != nil {
+	store "github.com/erizkiatama/ansara-gym/internal/trainer"
+)
+
+func TestValidateSignup(t *testing.T) {
+	ok := store.Trainer{Email: "ada@example.com", Name: "Ada"}
+	if err := validateSignup(ok, "correct-horse"); err != nil {
 		t.Fatal(err)
 	}
-	if got != "foo.bar@example.com" {
-		t.Fatalf("got %q", got)
-	}
 
-	for _, in := range []string{"", "no-at", "@x.com", "x@", "a@b c.com"} {
-		if _, err := normalizeEmail(in); err == nil {
-			t.Errorf("normalizeEmail(%q): want error", in)
-		}
+	if err := validateSignup(store.Trainer{Email: "", Name: "Ada"}, "correct-horse"); err == nil {
+		t.Fatal("want error for empty email")
+	}
+	if err := validateSignup(store.Trainer{Email: "no-at", Name: "Ada"}, "correct-horse"); err == nil {
+		t.Fatal("want error for invalid email")
+	}
+	if err := validateSignup(store.Trainer{Email: "ada@example.com", Name: ""}, "correct-horse"); err == nil {
+		t.Fatal("want error for empty name")
+	}
+	if err := validateSignup(ok, "short"); err == nil {
+		t.Fatal("want error for short password")
 	}
 }
 
-func TestValidatePassword(t *testing.T) {
-	if err := validatePassword("short"); err == nil {
-		t.Fatal("want error for short password")
-	}
-	if err := validatePassword("long-enough"); err != nil {
+func TestValidateEmail(t *testing.T) {
+	if err := validateEmail("foo.bar@example.com"); err != nil {
 		t.Fatal(err)
+	}
+	for _, in := range []string{"", "no-at", "@x.com", "x@", "a@b c.com"} {
+		if err := validateEmail(in); err == nil {
+			t.Errorf("validateEmail(%q): want error", in)
+		}
 	}
 }

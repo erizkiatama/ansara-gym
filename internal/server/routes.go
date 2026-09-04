@@ -25,6 +25,15 @@ func (s *Server) routes() http.Handler {
 				r.Get("/me", s.auth.Me)
 			})
 		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(s.auth.RequireTrainer)
+			r.Post("/clients", s.clients.Create)
+			r.Get("/clients", s.clients.List)
+			r.Get("/clients/{id}", s.clients.Get)
+			r.Put("/clients/{id}", s.clients.Update)
+			r.Delete("/clients/{id}", s.clients.Delete)
+		})
 	})
 
 	return r

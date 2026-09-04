@@ -8,11 +8,17 @@ import (
 
 const maxJSONBodyBytes = 1 << 16
 
-func Decode(w http.ResponseWriter, r *http.Request, dest any) error {
+// Bind decodes the JSON body into dest. On failure it writes
+// 400 {"error":"invalid json"} and returns false.
+func Bind(w http.ResponseWriter, r *http.Request, dest any) bool {
 	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBodyBytes)
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
-	return dec.Decode(dest)
+	if err := dec.Decode(dest); err != nil {
+		Error(w, http.StatusBadRequest, "invalid json")
+		return false
+	}
+	return true
 }
 
 func JSON(w http.ResponseWriter, status int, v any) {
