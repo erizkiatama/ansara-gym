@@ -12,15 +12,18 @@ import (
 	authhttp "github.com/erizkiatama/ansara-gym/internal/server/auth"
 	clienthttp "github.com/erizkiatama/ansara-gym/internal/server/client"
 	"github.com/erizkiatama/ansara-gym/internal/server/respond"
+	sessionhttp "github.com/erizkiatama/ansara-gym/internal/server/session"
+	"github.com/erizkiatama/ansara-gym/internal/session"
 	"github.com/erizkiatama/ansara-gym/internal/trainer"
 	"github.com/jmoiron/sqlx"
 )
 
 type Server struct {
-	log     *slog.Logger
-	db      *sqlx.DB
-	auth    *authhttp.Handler
-	clients *clienthttp.Handler
+	log      *slog.Logger
+	db       *sqlx.DB
+	auth     *authhttp.Handler
+	clients  *clienthttp.Handler
+	sessions *sessionhttp.Handler
 }
 
 func New(log *slog.Logger, database *sqlx.DB, authCfg config.AuthConfig) http.Handler {
@@ -32,7 +35,8 @@ func New(log *slog.Logger, database *sqlx.DB, authCfg config.AuthConfig) http.Ha
 			auth.NewTokens(authCfg.JWTSecret, authCfg.JWTTTL),
 			trainer.NewRepo(database),
 		),
-		clients: clienthttp.NewHandler(log, client.NewRepo(database)),
+		clients:  clienthttp.NewHandler(log, client.NewRepo(database)),
+		sessions: sessionhttp.NewHandler(log, session.NewRepo(database)),
 	}
 	return s.routes()
 }

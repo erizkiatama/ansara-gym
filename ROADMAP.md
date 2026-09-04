@@ -6,7 +6,7 @@
 
 This roadmap maps the MVP feature set to a 12-week Go Senior Backend learning path, per `.cursorrules`.
 
-**Active week: 5** (Weeks 1–4 complete). Progress and decisions for finished weeks live in [`docs/progress/`](docs/progress/) (`Week 1.md`, `Week 2.md`, `Week 3.md`, `Week 4.md`, …).
+**Active week: 6** (Weeks 1–5 complete). Progress and decisions for finished weeks live in [`docs/progress/`](docs/progress/) (`Week 1.md`, `Week 2.md`, `Week 3.md`, `Week 4.md`, `Week 5.md`, …).
 
 ## Architecture Decisions (locked in during Phase 1)
 
@@ -62,6 +62,7 @@ This roadmap maps the MVP feature set to a 12-week Go Senior Backend learning pa
 - **Topic**: Database transactions (`sqlx.Tx`), nested multi-row writes, partial-failure rollback handling.
 - **Feature**: `POST /v1/clients/{id}/sessions` — create a session with nested exercises and sets in one atomic transaction.
 - **Verify**: Force a mid-transaction failure (e.g. invalid exercise_id in one of many sets) and confirm full rollback — no partial rows persisted.
+- **Progress**: [`docs/progress/Week 5.md`](docs/progress/Week%205.md)
 
 ### Week 6 — Querying & Analytics
 
