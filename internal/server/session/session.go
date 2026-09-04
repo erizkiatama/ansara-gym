@@ -24,15 +24,8 @@ func NewHandler(log *slog.Logger, sessions Repository) *Handler {
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	trainerID, ok := authkit.TrainerIDFromContext(r.Context())
+	trainerID, clientID, ok := h.scopedClient(w, r)
 	if !ok {
-		respond.Error(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	clientID := chi.URLParam(r, "id")
-	if !utils.ValidID(clientID) {
-		respond.Error(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 
@@ -94,6 +87,95 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respond.JSON(w, http.StatusCreated, toResponse(row))
+}
+
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	trainerID, clientID, ok := h.scopedClient(w, r)
+	if !ok {
+		return
+	}
+
+	page, err := parseListPage(r)
+	if err != nil {
+		respond.Error(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	rows, hasMore, err := h.sessions.List(r.Context(), trainerID, clientID, page)
+	if err != nil {
+		h.writeStoreErr(w, err, "list sessions")
+		return
+	}
+
+	out := make([]sessionHeader, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, toHeader(row))
+	}
+	resp := listResponse{Sessions: out}
+	if hasMore && len(rows) > 0 {
+		last := rows[len(rows)-1]
+		resp.Next = &listCursor{
+			BeforeDate: last.SessionDate.Format("2006-01-02"),
+			BeforeID:   last.ID,
+		}
+	}
+	respond.JSON(w, http.StatusOK, resp)
+}
+
+func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
+	trainerID, clientID, ok := h.scopedClient(w, r)
+	if !ok {
+		return
+	}
+
+	sessionID := chi.URLParam(r, "sessionId")
+	if !utils.ValidID(sessionID) {
+		respond.Error(w, http.StatusBadRequest, "invalid id")
+		return
+	}
+
+	row, err := h.sessions.Get(r.Context(), trainerID, clientID, sessionID)
+	if err != nil {
+		h.writeStoreErr(w, err, "get session")
+		return
+	}
+
+	respond.JSON(w, http.StatusOK, toResponse(row))
+}
+
+func (h *Handler) Progress(w http.ResponseWriter, r *http.Request) {
+	trainerID, clientID, ok := h.scopedClient(w, r)
+	if !ok {
+		return
+	}
+
+	exerciseID := chi.URLParam(r, "exerciseId")
+	if !utils.ValidID(exerciseID) {
+		respond.Error(w, http.StatusBadRequest, "invalid id")
+		return
+	}
+
+	points, err := h.sessions.Progress(r.Context(), trainerID, clientID, exerciseID)
+	if err != nil {
+		h.writeStoreErr(w, err, "get progress")
+		return
+	}
+
+	respond.JSON(w, http.StatusOK, toProgressResponse(points))
+}
+
+func (h *Handler) scopedClient(w http.ResponseWriter, r *http.Request) (trainerID, clientID string, ok bool) {
+	trainerID, ok = authkit.TrainerIDFromContext(r.Context())
+	if !ok {
+		respond.Error(w, http.StatusUnauthorized, "unauthorized")
+		return "", "", false
+	}
+	clientID = chi.URLParam(r, "id")
+	if !utils.ValidID(clientID) {
+		respond.Error(w, http.StatusBadRequest, "invalid id")
+		return "", "", false
+	}
+	return trainerID, clientID, true
 }
 
 func (h *Handler) writeStoreErr(w http.ResponseWriter, err error, op string) {

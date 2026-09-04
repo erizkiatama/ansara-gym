@@ -6,7 +6,7 @@
 
 This roadmap maps the MVP feature set to a 12-week Go Senior Backend learning path, per `.cursorrules`.
 
-**Active week: 6** (Weeks 1–5 complete). Progress and decisions for finished weeks live in [`docs/progress/`](docs/progress/) (`Week 1.md`, `Week 2.md`, `Week 3.md`, `Week 4.md`, `Week 5.md`, …).
+**Active week: 7** (Weeks 1–6 complete). Progress and decisions for finished weeks live in [`docs/progress/`](docs/progress/) (`Week 1.md`, `Week 2.md`, `Week 3.md`, `Week 4.md`, `Week 5.md`, `Week 6.md`, …).
 
 ## Architecture Decisions (locked in during Phase 1)
 
@@ -69,6 +69,7 @@ This roadmap maps the MVP feature set to a 12-week Go Senior Backend learning pa
 - **Topic**: `EXPLAIN ANALYZE`, composite indexes, pagination (keyset vs offset), aggregate queries.
 - **Feature**: `GET /v1/clients/{id}/sessions` (paginated history), `GET /v1/clients/{id}/exercises/{exerciseId}/progress` (max weight over time, excluding warm-up sets).
 - **Verify**: `EXPLAIN ANALYZE` on the progress query before/after adding the relevant composite index; confirm plan uses an index scan, not a sequential scan, at realistic data volume.
+- **Progress**: [`docs/progress/Week 6.md`](docs/progress/Week%206.md)
 
 ### Week 7 — Concurrency
 

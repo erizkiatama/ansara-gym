@@ -3,6 +3,9 @@ package session
 import (
 	"errors"
 	"math"
+	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	store "github.com/erizkiatama/ansara-gym/internal/session"
@@ -70,4 +73,40 @@ func parseSessionDate(s string) (time.Time, error) {
 		return time.Time{}, nil
 	}
 	return time.Parse("2006-01-02", s)
+}
+
+const (
+	defaultListLimit = 20
+	maxListLimit     = 100
+)
+
+func parseListPage(r *http.Request) (store.ListParams, error) {
+	params := store.ListParams{Limit: defaultListLimit}
+
+	if raw := strings.TrimSpace(r.URL.Query().Get("limit")); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 1 || n > maxListLimit {
+			return store.ListParams{}, errors.New("limit must be between 1 and 100")
+		}
+		params.Limit = n
+	}
+
+	beforeDate := strings.TrimSpace(r.URL.Query().Get("before_date"))
+	beforeID := strings.TrimSpace(r.URL.Query().Get("before_id"))
+	if beforeDate == "" && beforeID == "" {
+		return params, nil
+	}
+	if beforeDate == "" || beforeID == "" {
+		return store.ListParams{}, errors.New("before_date and before_id are required together")
+	}
+	day, err := time.Parse("2006-01-02", beforeDate)
+	if err != nil {
+		return store.ListParams{}, errors.New("invalid before_date")
+	}
+	if !utils.ValidID(beforeID) {
+		return store.ListParams{}, errors.New("invalid before_id")
+	}
+	params.BeforeDate = day
+	params.BeforeID = beforeID
+	return params, nil
 }

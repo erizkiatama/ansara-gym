@@ -2,6 +2,8 @@ package session
 
 import (
 	"database/sql"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -57,5 +59,37 @@ func TestParseSessionDate(t *testing.T) {
 	zero, err := parseSessionDate("")
 	if err != nil || !zero.IsZero() {
 		t.Fatalf("empty: %v %v", zero, err)
+	}
+}
+
+func TestParseListPage(t *testing.T) {
+	first, err := parseListPage(httptest.NewRequest(http.MethodGet, "/v1/clients/x/sessions", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Limit != defaultListLimit || first.BeforeID != "" {
+		t.Fatalf("got %#v", first)
+	}
+
+	ok, err := parseListPage(httptest.NewRequest(http.MethodGet, "/v1/clients/x/sessions?limit=2&before_date=2026-09-07&before_id=11111111-1111-1111-1111-111111111111", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok.Limit != 2 || ok.BeforeID != "11111111-1111-1111-1111-111111111111" || ok.BeforeDate.Format("2006-01-02") != "2026-09-07" {
+		t.Fatalf("got %#v", ok)
+	}
+
+	cases := []string{
+		"/v1/clients/x/sessions?limit=0",
+		"/v1/clients/x/sessions?limit=101",
+		"/v1/clients/x/sessions?before_date=2026-09-07",
+		"/v1/clients/x/sessions?before_id=11111111-1111-1111-1111-111111111111",
+		"/v1/clients/x/sessions?before_date=07-09-2026&before_id=11111111-1111-1111-1111-111111111111",
+		"/v1/clients/x/sessions?before_date=2026-09-07&before_id=nope",
+	}
+	for _, u := range cases {
+		if _, err := parseListPage(httptest.NewRequest(http.MethodGet, u, nil)); err == nil {
+			t.Errorf("%s: want error", u)
+		}
 	}
 }
