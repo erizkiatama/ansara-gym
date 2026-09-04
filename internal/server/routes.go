@@ -33,6 +33,7 @@ func (s *Server) routes() http.Handler {
 			r.Get("/clients/{id}", s.clients.Get)
 			r.Put("/clients/{id}", s.clients.Update)
 			r.Delete("/clients/{id}", s.clients.Delete)
+			r.Post("/clients/{id}/sessions", s.sessions.Create)
 		})
 	})
 

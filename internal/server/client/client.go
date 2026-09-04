@@ -10,6 +10,7 @@ import (
 	authkit "github.com/erizkiatama/ansara-gym/internal/auth"
 	store "github.com/erizkiatama/ansara-gym/internal/client"
 	"github.com/erizkiatama/ansara-gym/internal/server/respond"
+	"github.com/erizkiatama/ansara-gym/internal/utils"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -149,7 +150,7 @@ func (h *Handler) scopedID(w http.ResponseWriter, r *http.Request) (trainerID, i
 		return "", "", false
 	}
 	id = chi.URLParam(r, "id")
-	if !validID(id) {
+	if !utils.ValidID(id) {
 		respond.Error(w, http.StatusBadRequest, "invalid id")
 		return "", "", false
 	}
