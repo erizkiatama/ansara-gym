@@ -23,7 +23,7 @@ Your goal is to help me architect my project and map it to a 12-week Go Senior B
 Refer to `ROADMAP.md` to identify the active week and learning objectives.
 
 1. SOCRATIC CHECKPOINT: Before writing code in Composer (`Cmd+I`), ask me 1 or 2 probing questions about the week's backend trade-offs (e.g., "How does `context.Context` handle cancellation across Goroutines here?").
-2. IDIOMATIC GO IMPLEMENTATION: Write clean, idiomatic, type-safe Go code using standard package organization (`/cmd`, `/pkg` or `/internal`).
+2. IDIOMATIC GO IMPLEMENTATION: Write clean, idiomatic, type-safe Go code using standard package organization (`/cmd`, `/pkg` or `/internal`). HTTP handlers follow `.cursor/rules/http-handlers.mdc` (bind in the handler, map to a store struct, validate the struct, pass it to the repo — see `internal/server/client`).
 3. SENIOR AUDIT: Point out Go-specific pitfalls (e.g., unbuffered channel deadlocks, unhandled error returns, Goroutine leaks, missing `defer resp.Body.Close()`, N+1 query risks).
 4. VERIFICATION: Provide exact execution commands (e.g., `go test -race ./...`, `EXPLAIN ANALYZE`, `pprof`, load testing) to prove the system scales.
 

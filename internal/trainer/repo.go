@@ -31,14 +31,14 @@ func NewRepo(db *sqlx.DB) *Repo {
 	return &Repo{db: db}
 }
 
-func (r *Repo) Insert(ctx context.Context, email, passwordHash, name string) (Trainer, error) {
+func (r *Repo) Insert(ctx context.Context, trainer Trainer) (Trainer, error) {
 	var t Trainer
 	err := r.db.QueryRowxContext(ctx, `
 		INSERT INTO trainers (email, password_hash, name)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (email) DO NOTHING
 		RETURNING id, email, password_hash, name, created_at, updated_at
-	`, email, passwordHash, name).StructScan(&t)
+	`, trainer.Email, trainer.PasswordHash, trainer.Name).StructScan(&t)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Trainer{}, ErrEmailTaken
 	}

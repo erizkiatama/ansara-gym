@@ -1,0 +1,38 @@
+---
+description: HTTP handler style — bind, map to store struct, validate, repo
+alwaysApply: true
+---
+
+# HTTP handlers
+
+Follow `internal/server/client` Create/Update. Do not invent helper layers that unpack JSON into primitives.
+
+Handler flow:
+
+1. Identity from context (or 401)
+2. `respond.Bind` into a request DTO in the handler — no `decodeX` wrapper that returns `(name, notes, ok)`
+3. Map DTO → `store` struct in the handler. Trim with `strings.TrimSpace` (and `ToLower`+trim for emails) so the struct is already clean. Nullable text: `sql.NullString{String: notes, Valid: notes != ""}` **after** trim.
+4. `validateX(entity) error` on that struct; `respond.Error(w, 400, err.Error())`
+5. Repo methods take the struct (`Insert(ctx, trainerID, client)`), not a bag of scalars
+6. Consumer interface is named `Repository`
+
+```go
+var req clientRequest
+if !respond.Bind(w, r, &req) {
+    return
+}
+name := strings.TrimSpace(req.Name)
+notes := strings.TrimSpace(req.Notes)
+client := store.Client{
+    Name: name,
+    Notes: sql.NullString{String: notes, Valid: notes != ""},
+}
+if err := validateClient(client); err != nil {
+    respond.Error(w, http.StatusBadRequest, err.Error())
+    return
+}
+row, err := h.clients.Insert(r.Context(), trainerID, client)
+```
+
+`respond` stays JSON only (`Bind` / `JSON` / `Error`). Do not put domain validation there.
+Import the persistence package as `store` when the HTTP package name would collide.
